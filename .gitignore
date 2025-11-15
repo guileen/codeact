@@ -28,3 +28,5 @@ pnpm-debug.log*
 .cache/
 .temp/
 .tmp/
+.claude
+test_workspace/
