@@ -1,0 +1,29 @@
+{
+  "name": "codeact",
+  "version": "0.1.0",
+  "description": "Minimal CodeAct agent framework with pnpm+ts+zod+vm2",
+  "type": "module",
+  "bin": {
+    "codeact": "dist/cli.js"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "start": "pnpm build && node dist/cli.js",
+    "dev": "tsx src/cli.ts"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "@anthropic-ai/sandbox-runtime": "^0.0.10",
+    "@themaximalist/llm.js": "^1.0.3",
+    "dotenv": "^16.4.5",
+    "vm2": "^3.9.19",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/node": "^20.19.25",
+    "tsx": "^4.20.6",
+    "typescript": "^5.5.4"
+  }
+}
