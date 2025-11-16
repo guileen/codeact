@@ -1,4 +1,4 @@
-# CodeAct
+# CodeAct & LightAgent
 
 最小化的 AI Code Agent - 用代码解决一切问题。
 
@@ -35,6 +35,55 @@ pnpm dev "创建一个包含姓名的文件"
 
 # 管道组合使用
 echo "删除所有临时文件" | pnpm dev
+```
+
+## 🆕 LightAgent TypeScript
+
+This project now includes a complete TypeScript rewrite of LightAgent with enhanced features:
+
+### Quick Start
+
+```bash
+# Install dependencies
+npm install
+
+# Set your OpenAI API key
+export OPENAI_API_KEY="your-key-here"
+
+# Build the project
+npm run build
+
+# Run examples
+npx tsx examples/01-single-agent-simple.ts
+npx tsx examples/04-multi-agent-simple.ts
+```
+
+### Features
+
+- **Type Safety**: Full TypeScript support with type definitions
+- **Tool System**: Decorator-based tool creation with metadata
+- **Multi-Agent Support**: Swarm management for coordinated agent operations
+- **Streaming**: Real-time response streaming capabilities
+- **Memory Integration**: Plugin memory system for conversational context
+- **MCP Support**: Model Context Protocol integration
+- **Extensible Architecture**: Modular design for easy customization
+
+### Core Components
+
+```typescript
+import { LightAgent, LightSwarm, tool } from './src';
+
+// Create agent with tools
+const agent = new LightAgent({
+  name: 'MyAgent',
+  instructions: 'You are a helpful assistant.',
+  model: 'gpt-4o-mini',
+  tools: [myTool]
+});
+
+// Create swarm for multi-agent coordination
+const swarm = new LightSwarm();
+swarm.registerAgent(agent1, agent2, agent3);
 ```
 
 ## 💡 核心示例

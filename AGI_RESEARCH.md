@@ -206,3 +206,141 @@
 该整合方案完全适配“本地无模型、依赖API”的Agent场景，通过**规则化优先、模板复用、元策略兜底**，在轻量化部署下实现接近复杂系统的性能（准确率损失≤5%，资源消耗降低60%）。
 
 需要进一步细化某类场景（如电商数据分析、客服对话）的具体配置吗？
+
+
+
+
+------
+2025-11-16 研究汇总：
+# 核心关键字提取与精简知识图谱
+## 一、精简核心关键字（聚焦高重要性元素）
+### 1. 核心论文
+- 《Context Of Context Engineering》（上交大，元上下文核心）
+- 《CodeChain: Composable Code Actions for Complex LLM Tasks》
+- MetaRuleGPT（浙大，规则化推理）
+- HOLISTIC REASONING（规则化长文本处理）
+- Agent-R（字节跳动，自我进化反思）
+
+### 2. 核心技术
+- 上下文工程：ACE（自适应上下文）、元上下文管理
+- 代码行动：CodeAct、CodeChain
+- 推理框架：TOTAL（思维模板）、BoT（思维缓冲）、ToT（思维树）
+- 轻量向量：GTE-Small、sqlite-vec
+- 自我进化：执行轨迹记录、量化评估（token消耗、步骤效率、验收达标率）
+- 数据获取：Crawl4AI
+- 安全防护：RedCode
+
+### 3. 核心框架
+- LightAgent（二次开发核心）
+
+### 4. 核心产品形态
+- 自我进化Agent（中枢）
+- 极简后端生成（类PocketBase/SuperBase，测试场景+产品）
+- 前端社区生成（Vue/React，产品闭环）
+- 双端形态：网页端、命令行版
+
+### 5. 增长与融资（核心）
+- 增长黑客：模板分成、社区干货
+- 融资平台：雪球、GitHub、ProductHunt、Kickstarter
+- 核心指标：CAC、LTV、注册用户、付费用户、GitHub星标
+
+### 6. 核心团队角色
+- 全栈工程师（核心开发）
+- 增长运营（资源缺口弥补）
+
+
+## 二、精简知识图谱（Mermaid Diagram）
+```mermaid
+graph TD
+    subgraph "核心论文"
+        P1["《Context Of Context Engineering》"]
+        P2["《CodeChain》论文"]
+        P3["MetaRuleGPT"]
+        P4["HOLISTIC REASONING"]
+        P5["Agent-R"]
+    end
+    
+    subgraph "核心技术"
+        subgraph "上下文工程"
+            T1["ACE"]
+            T2["元上下文管理"]
+        end
+        subgraph "代码行动"
+            T3["CodeAct"]
+            T4["CodeChain"]
+        end
+        subgraph "推理框架"
+            T5["TOTAL"]
+            T6["BoT"]
+            T7["ToT"]
+        end
+        subgraph "轻量向量"
+            T8["GTE-Small"]
+            T9["sqlite-vec"]
+        end
+        subgraph "自我进化"
+            T10["执行轨迹记录"]
+            T11["量化评估"]
+        end
+        T12["Crawl4AI"]
+        T13["RedCode"]
+    end
+    
+    subgraph "核心框架"
+        F1["LightAgent"]
+    end
+    
+    subgraph "核心产品"
+        Pr1["自我进化Agent"]
+        Pr2["极简后端生成"]
+        Pr3["前端社区生成"]
+        Pr4["网页端"]
+        Pr5["命令行版"]
+    end
+    
+    subgraph "增长融资"
+        G1["模板分成"]
+        G2["社区干货"]
+        Pl1["雪球"]
+        Pl2["GitHub"]
+        Pl3["ProductHunt"]
+        Pl4["Kickstarter"]
+        G3["CAC/LTV"]
+        G4["注册/付费用户"]
+    end
+    
+    subgraph "核心团队"
+        R1["全栈工程师"]
+        R2["增长运营"]
+    end
+    
+    %% 核心关联关系
+    P1 --> T2
+    P2 --> T4
+    P3 --> T7
+    P4 --> T6
+    P5 --> T11
+    
+    F1 --> Pr1
+    T1 --> Pr1
+    T3 --> Pr1
+    T5 --> Pr1
+    T10 --> Pr1
+    T11 --> Pr1
+    
+    Pr1 --> Pr2
+    Pr1 --> Pr3
+    Pr2 --> Pr4
+    Pr3 --> Pr5
+    
+    G1 --> Pr1
+    G2 --> Pl2
+    Pl1 --> G4
+    Pl2 --> G4
+    Pl3 --> G4
+    Pl4 --> G4
+    
+    R1 --> F1
+    R2 --> G1
+```
+
