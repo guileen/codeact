@@ -1,5 +1,23 @@
 import { randomUUID } from 'crypto';
 import { MemoryProtocol, AgentConfig, ChatMessage, ToolCall, MCPConfig } from './types';
+import { chat } from '../llm.js';
+import { runCode } from '../sandbox.js';
+import { CodeBlock } from '../schemas.js';
+
+interface AgentState {
+  sessionStart: Date;
+  lastActivity: Date;
+  completedTasks: Array<{
+    id: string;
+    description: string;
+    completedAt: Date;
+  }>;
+  currentTask?: {
+    id: string;
+    description: string;
+    startedAt: Date;
+  };
+}
 import { ToolRegistry } from './tool-registry';
 import { ToolLoader } from './tool-loader';
 import { ToolDispatcher } from './tool-dispatcher';
@@ -36,6 +54,13 @@ export class LightAgent {
   private chatParams: any = {};
   private history: ChatMessage[] = [];
 
+  // Agent state for CLI compatibility
+  private state: AgentState = {
+    sessionStart: new Date(),
+    lastActivity: new Date(),
+    completedTasks: []
+  };
+
   // MCP support
   private mcpConfig?: MCPConfig;
   private mcpEnabled: boolean = false;
@@ -48,7 +73,7 @@ export class LightAgent {
     this.instructions = config.instructions || 'You are a helpful agent.';
     this.role = config.role;
     this.model = config.model;
-    this.api_key = config.api_key || process.env.OPENAI_API_KEY || '';
+    this.api_key = config.api_key || process.env.LLM_API_KEY || process.env.OPENAI_API_KEY || '';
     this.base_url = config.base_url || process.env.OPENAI_BASE_URL || 'https://api.openai.com/v1';
     this.websocket_base_url = config.websocket_base_url;
     this.memory = config.memory;
@@ -196,10 +221,33 @@ export class LightAgent {
     // Log request parameters
     this.log('DEBUG', 'request_params', { params: this.chatParams });
 
-    // Mock response for now - in a real implementation, you'd call the OpenAI API
-    const mockResponse = this.createMockResponse(stream);
+    try {
+      // Convert chatParams to the format expected by the LLM function
+      const messages = this.chatParams.messages as { role: "system" | "user" | "assistant"; content: string }[];
 
-    return this.processResponse(mockResponse, stream, max_retry);
+      // Call real LLM
+      const llmResponse = await chat(messages, false);
+
+      // Create response object compatible with existing processing
+      const realResponse = {
+        choices: [{
+          message: {
+            content: llmResponse,
+            tool_calls: null
+          },
+          finish_reason: 'stop'
+        }]
+      };
+
+      return this.processResponse(realResponse, stream, max_retry);
+    } catch (error) {
+      this.log('ERROR', 'llm_call_failed', { error: String(error) });
+
+      // Fallback to mock response on error
+      const fallbackResponse = this.createMockResponse(stream);
+      fallbackResponse.choices[0].message.content = `LLM Error: ${error instanceof Error ? error.message : String(error)}`;
+      return this.processResponse(fallbackResponse, stream, max_retry);
+    }
   }
 
   /**
@@ -259,8 +307,28 @@ export class LightAgent {
    */
   private async processNonStreamResponse(response: any, maxRetry: number): Promise<string> {
     for (let attempt = 0; attempt < maxRetry; attempt++) {
-      // Mock processing - in real implementation, handle tool calls here
       const content = response.choices?.[0]?.message?.content || 'No content available';
+
+      // Parse tool calls from the content (like the original agent does)
+      const toolCalls = this.parseToolCallsFromContent(content);
+
+      // If there are tool calls, execute them
+      if (toolCalls.length > 0) {
+        const toolResults = await this.executeParsedToolCalls(toolCalls);
+
+        // Append tool results to conversation history
+        this.history.push({ role: 'assistant', content });
+        for (const toolResult of toolResults) {
+          this.history.push({
+            role: 'system',
+            content: `Tool ${toolResult.name} result: ${toolResult.result}`
+          });
+        }
+
+        // Make a follow-up call to LLM with tool results
+        const followUpResponse = await this.makeLLMCallWithHistory();
+        return followUpResponse;
+      }
 
       this.log('INFO', 'final_reply', { reply: content });
       return content;
@@ -341,6 +409,211 @@ export class LightAgent {
   public log(level: string, action: string, data: any): void {
     if (this.logger) {
       this.logger.log(level, action, data);
+    }
+  }
+
+  /**
+   * Get agent state - CLI compatibility method
+   */
+  public getState(): AgentState {
+    return { ...this.state };
+  }
+
+  /**
+   * Get memory/history - CLI compatibility method
+   */
+  public getMemory(): ChatMessage[] {
+    return [...this.history];
+  }
+
+  /**
+   * Reset agent state - CLI compatibility method
+   */
+  public reset(): void {
+    this.state = {
+      sessionStart: new Date(),
+      lastActivity: new Date(),
+      completedTasks: []
+    };
+    this.history = [];
+  }
+
+  /**
+   * Update last activity and track task completion
+   */
+  private updateActivity(taskDescription?: string): void {
+    this.state.lastActivity = new Date();
+
+    if (taskDescription) {
+      // Complete current task if exists
+      if (this.state.currentTask) {
+        this.state.completedTasks.push({
+          ...this.state.currentTask,
+          completedAt: new Date()
+        });
+      }
+
+      // Start new task
+      this.state.currentTask = {
+        id: randomUUID(),
+        description: taskDescription,
+        startedAt: new Date()
+      };
+    }
+  }
+
+  /**
+   * Parse tool calls from LLM content (similar to original agent)
+   */
+  private parseToolCallsFromContent(content: string): Array<{ type: string; language: string; code: string }> {
+    const toolCalls: Array<{ type: string; language: string; code: string }> = [];
+
+    // Parse code blocks
+    const codeBlockMatches = content.match(/\`\`\`(.*?)\n(.*?)\`\`\`/gs) || [];
+    for (const match of codeBlockMatches) {
+      const [_, language, code] = match.match(/\`\`\`(.*?)\n(.*?)\`\`\`/s) || ["", "", ""];
+      const lang = language.trim().toLowerCase();
+      if (lang === "bash" || lang === "javascript" || lang === "python" || lang === "js") {
+        toolCalls.push({
+          type: lang === "js" ? "javascript" : lang,
+          language: lang === "js" ? "javascript" : lang,
+          code: code.trim()
+        });
+      }
+    }
+
+    return toolCalls;
+  }
+
+  /**
+   * Execute parsed tool calls
+   */
+  private async executeParsedToolCalls(toolCalls: Array<{ type: string; language: string; code: string }>): Promise<Array<{ name: string; result: string }>> {
+    const results = [];
+
+    for (const toolCall of toolCalls) {
+      try {
+        this.log('DEBUG', 'executing_tool', { type: toolCall.type, language: toolCall.language });
+
+        // Execute the code using the sandbox
+        const codeBlock: CodeBlock = {
+          language: toolCall.language,
+          code: toolCall.code
+        };
+
+        const executionResult = await runCode(codeBlock);
+
+        // Format the output
+        let output = '';
+        if (executionResult.logs && executionResult.logs.length > 0) {
+          output += 'Logs:\n' + executionResult.logs.join('\n') + '\n';
+        }
+        if (executionResult.output !== undefined) {
+          output += 'Output:\n' + String(executionResult.output);
+        }
+
+        results.push({
+          name: toolCall.type,
+          result: output || 'Code executed successfully with no output'
+        });
+      } catch (error) {
+        results.push({
+          name: toolCall.type,
+          result: `Error executing ${toolCall.language} code: ${error instanceof Error ? error.message : String(error)}`
+        });
+      }
+    }
+
+    return results;
+  }
+
+  /**
+   * Execute tool calls from LLM response
+   */
+  private async executeToolCalls(toolCalls: any[]): Promise<Array<{ name: string; result: string }>> {
+    const results = [];
+
+    for (const toolCall of toolCalls) {
+      try {
+        const toolName = toolCall.function.name;
+        const args = JSON.parse(toolCall.function.arguments);
+
+        this.log('DEBUG', 'executing_tool', { name: toolName, args });
+
+        // Execute the tool using the tool registry
+        const tool = this.toolRegistry.getToolFunction(toolName);
+        if (tool) {
+          const result = await tool(args.language, args.code);
+          results.push({ name: toolName, result });
+        } else {
+          results.push({
+            name: toolName,
+            result: `Error: Tool ${toolName} not found`
+          });
+        }
+      } catch (error) {
+        results.push({
+          name: toolCall.function.name,
+          result: `Error executing tool: ${error instanceof Error ? error.message : String(error)}`
+        });
+      }
+    }
+
+    return results;
+  }
+
+  /**
+   * Make follow-up LLM call with current history
+   */
+  private async makeLLMCallWithHistory(): Promise<string> {
+    try {
+      const messages = this.history.map(msg => ({
+        role: msg.role as "system" | "user" | "assistant",
+        content: msg.content
+      }));
+
+      const llmResponse = await chat(messages, false);
+      this.log('INFO', 'followup_reply', { reply: llmResponse });
+
+      return llmResponse;
+    } catch (error) {
+      this.log('ERROR', 'followup_llm_error', { error: String(error) });
+      return `Error: ${error instanceof Error ? error.message : String(error)}`;
+    }
+  }
+
+  /**
+   * CLI-compatible run method that returns expected format
+   */
+  async runCLI(prompt: string): Promise<{ text: string; requiresInput?: boolean; inputPrompt?: string }> {
+    this.updateActivity(prompt);
+
+    try {
+      const result = await this.run(prompt);
+
+      // Handle different return types
+      let text: string;
+      if (typeof result === 'string') {
+        text = result;
+      } else {
+        // It's an AsyncGenerator, consume it
+        text = '';
+        for await (const chunk of result) {
+          text += chunk;
+        }
+      }
+
+      return {
+        text,
+        requiresInput: false,
+        inputPrompt: undefined
+      };
+    } catch (error) {
+      this.log('ERROR', 'run_cli_error', { error: String(error) });
+      return {
+        text: `Error: ${error instanceof Error ? error.message : String(error)}`,
+        requiresInput: false
+      };
     }
   }
 }

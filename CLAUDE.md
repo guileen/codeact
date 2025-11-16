@@ -19,7 +19,7 @@ be success? If there are multiple ways to implement a feature, for each way thin
 # Build TypeScript to JavaScript
 npm run build
 
-# Run development mode with tsx (for original CodeAct CLI)
+# Run development mode with tsx (LightAgent-powered CLI)
 npm run dev
 
 # Start production build
@@ -58,23 +58,37 @@ npx tsx examples/06-error-handling.ts && echo "✅ Error handling test passed"
 
 ## Project Architecture
 
-### Dual Architecture
-This repository contains two distinct agent systems:
+### Unified Architecture
+This repository now uses LightAgent as the primary agent system:
 
-1. **Legacy CodeAct** (`src-legacy/`): Original TypeScript code execution agent
-2. **LightAgent TypeScript** (`src/`): Complete TypeScript rewrite of Python LightAgent
+1. **LightAgent-Powered CLI** (`src/cli.ts`): Main command-line interface using LightAgent for all interactions
+2. **LightAgent TypeScript** (`src/lightagent/`): Complete TypeScript implementation with tool system, memory, and streaming
+3. **Legacy Components** (`src/agent.ts`, etc.): Original implementations retained for reference
+
+### Main Architecture (LightAgent-Powered)
+
+#### Core Components
+- **CLI** (`src/cli.ts`): Command-line interface powered by LightAgent for interactive code execution
+- **LightAgent** (`src/lightagent/light-agent.ts`): Main agent class with tool integration, memory support, and streaming
+- **Legacy Agent** (`src/agent.ts`): Original code execution agent (deprecated, use LightAgent)
+- **Sandbox** (`src/sandbox.ts`): Code execution environment using Anthropic AI Sandbox
+- **Tool System**: (`src/tools.ts`, `src/tool_executor.ts`): Tool integration and execution
+- **UI** (`src/ui_clean.ts`): User interface components
+- **LLM** (`src/llm.ts`): Language model integration
+- **Config** (`src/config.ts`): Configuration management
 
 ### LightAgent TypeScript Architecture
 
 #### Core Components
-- **LightAgent** (`src/light-agent.ts`): Main agent class with tool integration, memory support, and streaming
-- **LightSwarm** (`src/light-swarm.ts`): Multi-agent coordination system
+- **LightAgent** (`src/lightagent/light-agent.ts`): Main agent class with tool integration, memory support, and streaming
+- **LightSwarm** (`src/lightagent/light-swarm.ts`): Multi-agent coordination system
 - **Tool System**: Modular tool registration and execution
-  - `ToolRegistry`: Centralized tool management
-  - `ToolLoader`: Dynamic tool loading with caching
-  - `ToolDispatcher`: Async tool execution
-  - `tool-decorator.ts`: Decorator-based tool creation
-- **Types** (`src/types.ts`): Comprehensive TypeScript interfaces
+  - `ToolRegistry` (`src/lightagent/tool-registry.ts`): Centralized tool management
+  - `ToolLoader` (`src/lightagent/tool-loader.ts`): Dynamic tool loading with caching
+  - `ToolDispatcher` (`src/lightagent/tool-dispatcher.ts`): Async tool execution
+  - `tool-decorator.ts` (`src/lightagent/tool-decorator.ts`): Decorator-based tool creation
+- **Types** (`src/lightagent/types.ts`): Comprehensive TypeScript interfaces
+- **Logger** (`src/lightagent/logger.ts`): Logging utilities
 
 #### Tool Creation Patterns
 ```typescript
@@ -95,12 +109,11 @@ const tool = createTool(myFunction, {
 ```
 
 #### Agent Configuration
-Agents support OpenAI API integration, tool systems, memory interfaces, MCP (Model Context Protocol), streaming, and comprehensive logging. The current implementation uses mock responses for testing.
+Agents support real LLM API integration (via existing LLM module), tool systems, memory interfaces, MCP (Model Context Protocol), streaming, and comprehensive logging. The implementation now uses real LLM calls instead of mock responses.
 
-### Legacy CodeAct Architecture
-- **Agent** (`src-legacy/agent.ts`): Code execution agent with strict four-step process
-- **Sandbox** (`src-legacy/sandbox.ts`): Code execution environment using Anthropic AI Sandbox
-- **CLI** (`src-legacy/cli.ts`): Command-line interface for interactive use
+### Reference Implementations
+- **LightAgent Python** (`LightAgent/`): Python LightAgent submodule for reference and comparison
+- **Legacy Agent** (`src/agent.ts`): Original four-step process agent (deprecated, use LightAgent)
 
 ## Key Technical Decisions
 
@@ -131,12 +144,26 @@ OPENAI_API_KEY=your_openai_key_here
 
 ### Project Structure
 ```
-├── src/                    # LightAgent TypeScript implementation
-│   ├── light-agent.ts     # Main agent class
-│   ├── light-swarm.ts     # Multi-agent coordination
-│   ├── tool-*.ts          # Tool system components
-│   └── types.ts           # TypeScript definitions
-├── src-legacy/            # Original CodeAct implementation
+├── src/                    # Main CodeAct implementation
+│   ├── cli.ts             # Command-line interface
+│   ├── agent.ts           # Main code execution agent
+│   ├── sandbox.ts         # Code execution environment
+│   ├── tools.ts           # Tool integration
+│   ├── tool_executor.ts   # Tool execution engine
+│   ├── ui_clean.ts        # User interface components
+│   ├── llm.ts             # Language model integration
+│   ├── config.ts          # Configuration management
+│   ├── context.ts         # Context management
+│   ├── prompt.ts          # Prompt templates
+│   ├── schemas.ts         # Type schemas
+│   └── lightagent/        # LightAgent TypeScript implementation
+│       ├── light-agent.ts # Main LightAgent class
+│       ├── light-swarm.ts # Multi-agent coordination
+│       ├── tool-*.ts      # Tool system components
+│       ├── types.ts       # TypeScript definitions
+│       ├── logger.ts      # Logging utilities
+│       └── index.ts       # Entry point
+├── LightAgent/            # Python LightAgent submodule (reference)
 ├── examples/              # Usage examples and tests
 │   ├── 01-single-agent-simple.ts
 │   ├── 04-multi-agent-simple.ts
@@ -149,7 +176,10 @@ OPENAI_API_KEY=your_openai_key_here
 
 ## Development Notes
 
-- The LightAgent implementation is production-ready but uses mock API responses
+- The LightAgent implementation now uses real LLM API calls via the existing `src/llm.ts` module
+- Supports configurable models via `LLM_MODEL` environment variable (defaults to `gpt-4o-mini`)
+- Uses `LLM_API_KEY` and `LLM_BASE_URL` environment variables for API configuration
+- Fallback to error responses if LLM calls fail, ensuring robust operation
 - Tool decorators require `experimentalDecorators` in tsconfig.json for full decorator support
 - All examples are self-contained and demonstrate specific features
 - The codebase maintains compatibility between the original Python LightAgent API and TypeScript patterns

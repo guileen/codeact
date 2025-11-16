@@ -2,7 +2,8 @@
 import "dotenv/config";
 import readline from "node:readline";
 import path from "node:path";
-import { Agent } from "./agent.js";
+import { LightAgent } from "./lightagent/light-agent.js";
+import { codeExecutionTools } from "./lightagent/code-execution-tools.js";
 import { ContextManager } from "./context.js";
 import { CleanUI } from "./ui_clean.js";
 
@@ -16,10 +17,18 @@ async function single(prompt: string, workingDir?: string) {
   console.log(CleanUI.Style.muted(`会话ID: ${context.sessionId}`));
   console.log("");
 
-  const agent = new Agent();
+  const agent = new LightAgent({
+    model: process.env.LLM_MODEL || "gpt-4o-mini",
+    instructions: "You are CodeAct, a helpful coding assistant that can execute code and use tools to complete tasks. When users ask you to run code, create files, or perform system operations, use the available tools (bash, javascript, python) to execute the code in a sandboxed environment.",
+    debug: true,
+    tools: codeExecutionTools
+  });
 
   try {
-    const result = await agent.run(prompt);
+    const result = await agent.runCLI(prompt);
+
+    // Display the agent's response
+    console.log(result.text);
 
     if (result.requiresInput) {
       console.log(CleanUI.Style.warning("⚠️  单次模式不支持用户输入交互"));
@@ -60,7 +69,12 @@ async function interactive() {
   console.log(`${CleanUI.Style.info("❓")} 命令: 'exit' 退出 | 'status' 状态 | 'clear' 清屏 | 'help' 帮助`);
   console.log(CleanUI.Style.muted("─".repeat(50)));
 
-  const agent = new Agent();
+  const agent = new LightAgent({
+    model: process.env.LLM_MODEL || "gpt-4o-mini",
+    instructions: "You are CodeAct, a helpful coding assistant that can execute code and use tools to complete tasks. When users ask you to run code, create files, or perform system operations, use the available tools (bash, javascript, python) to execute the code in a sandboxed environment.",
+    debug: true,
+    tools: codeExecutionTools
+  });
 
   const ask = () => rl.question(`${CleanUI.Style.info("➤")} `, async (input: string) => {
     const q = input.trim();
@@ -120,14 +134,20 @@ async function interactive() {
       // 初始化上下文
       const context = contextManager.initializeContext(q);
 
-      const result = await agent.run(q);
+      const result = await agent.runCLI(q);
+
+      // Display the agent's response
+      console.log(result.text);
 
       // 处理需要用户输入的情况
       if (result.requiresInput && result.inputPrompt) {
         const askInput = () => {
           rl.question(`${CleanUI.Style.warning("💭 请输入:")} `, async (userInput: string) => {
             try {
-              const inputResult = await agent.run(userInput);
+              const inputResult = await agent.runCLI(userInput);
+
+              // Display the agent's response to input
+              console.log(inputResult.text);
               console.log("");
 
               if (inputResult.requiresInput) {
