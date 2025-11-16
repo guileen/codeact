@@ -1,5 +1,5 @@
-import { chat } from "./llm";
-import { ToolExecutor } from "./tool_executor";
+import { chat } from "../shared/llm";
+import { ToolExecutor } from "../tools/tool_executor";
 import {
   ToolCall,
   ToolResult,
@@ -7,8 +7,8 @@ import {
   Task,
   TaskStatus,
   AgentState
-} from "./tools";
-import { CleanUI } from "./ui_clean.js";
+} from "../tools/tools";
+import { CleanUI } from "../ui/clean";
 import { v4 as uuidv4 } from "uuid";
 
 type Msg = { role: "user" | "assistant" | "tool"; content: string };

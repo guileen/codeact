@@ -1,8 +1,28 @@
 import { randomUUID } from 'crypto';
-import { MemoryProtocol, AgentConfig, ChatMessage, ToolCall, MCPConfig } from './types';
-import { chat } from '../llm.js';
-import { runCode } from '../sandbox.js';
-import { CodeBlock } from '../schemas.js';
+import { chat } from '../shared/llm';
+import { runCode } from '../shared/sandbox';
+import { CodeBlock } from '../shared/schemas';
+
+type ChatMessage = { role: 'system' | 'user' | 'assistant'; content: string };
+type MemoryProtocol = { retrieve: (q: string, userId: string) => Promise<{ results?: Array<{ memory: string }> }>; store: (q: string, userId: string) => Promise<void> };
+type AgentConfig = {
+  name?: string;
+  instructions?: string;
+  role?: string;
+  model: string;
+  api_key?: string;
+  base_url?: string;
+  websocket_base_url?: string;
+  memory?: MemoryProtocol;
+  tree_of_thought?: boolean;
+  self_learning?: boolean;
+  filter_tools?: boolean;
+  debug?: boolean;
+  log_level?: 'INFO' | 'DEBUG' | 'ERROR';
+  log_file?: string;
+  tools?: Array<string | Function>;
+};
+type MCPConfig = any;
 
 interface AgentState {
   sessionStart: Date;
@@ -18,10 +38,9 @@ interface AgentState {
     startedAt: Date;
   };
 }
-import { ToolRegistry } from './tool-registry';
-import { ToolLoader } from './tool-loader';
-import { ToolDispatcher } from './tool-dispatcher';
-import { LoggerManager } from './logger';
+import { ToolRegistry } from '../tools/tool-registry';
+import { ToolLoader } from '../tools/tool-loader';
+import { ToolDispatcher } from '../tools/tool-dispatcher';
 
 /**
  * Main LightAgent class - TypeScript implementation
@@ -48,7 +67,6 @@ export class LightAgent {
   private toolRegistry: ToolRegistry;
   private toolLoader: ToolLoader;
   private toolDispatcher: ToolDispatcher;
-  private logger?: LoggerManager;
 
   // Chat history
   private chatParams: any = {};
@@ -89,15 +107,7 @@ export class LightAgent {
     this.toolLoader = new ToolLoader();
     this.toolDispatcher = new ToolDispatcher(this.toolRegistry);
 
-    // Setup logging
-    if (this.debug) {
-      this.logger = new LoggerManager(
-        this.name,
-        this.debug,
-        this.log_level,
-        this.log_file
-      );
-    }
+    // Logging simplified to console when debug=true
 
     // Load tools if provided
     if (config.tools && config.tools.length > 0) {
@@ -176,9 +186,6 @@ export class LightAgent {
 
     // Set trace ID
     const traceId = randomUUID();
-    if (this.logger) {
-      this.logger.setTraceId(traceId);
-    }
 
     this.log('INFO', 'run_start', { query, user_id, stream });
 
@@ -407,8 +414,8 @@ export class LightAgent {
    * Log message
    */
   public log(level: string, action: string, data: any): void {
-    if (this.logger) {
-      this.logger.log(level, action, data);
+    if (this.debug) {
+      console.log(`[${level}] ${action}`, data);
     }
   }
 
@@ -480,6 +487,35 @@ export class LightAgent {
           code: code.trim()
         });
       }
+    }
+
+    // Parse interpreter JSON blocks
+    const interpMatches = content.match(/<\|interpreter\|>\s*\n?\s*\{[\s\S]*?\}/g) || [];
+    for (const m of interpMatches) {
+      const jsonStr = m.replace(/^[\s\S]*?<\|interpreter\|>/, '').trim();
+      try {
+        const data = JSON.parse(jsonStr);
+        const code = (data.code || '').trim();
+        if (code) {
+          const lang = (data.language || 'bash').toLowerCase();
+          const resolved = lang === 'js' ? 'javascript' : (lang === 'python' || lang === 'javascript' || lang === 'bash' ? lang : 'bash');
+          toolCalls.push({ type: resolved, language: resolved, code });
+        }
+      } catch {}
+    }
+
+    // Parse bare JSON code objects
+    const bareJsonMatches = content.match(/\{\s*"code"\s*:\s*"[\s\S]*?"[\s\S]*?\}/g) || [];
+    for (const jm of bareJsonMatches) {
+      try {
+        const obj = JSON.parse(jm);
+        const code = (obj.code || '').trim();
+        if (code) {
+          const lang = (obj.language || 'bash').toLowerCase();
+          const resolved = lang === 'js' ? 'javascript' : (lang === 'python' || lang === 'javascript' || lang === 'bash' ? lang : 'bash');
+          toolCalls.push({ type: resolved, language: resolved, code });
+        }
+      } catch {}
     }
 
     return toolCalls;

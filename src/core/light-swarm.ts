@@ -1,5 +1,5 @@
 import { LightAgent } from './light-agent';
-import { ChatMessage } from './types';
+type ChatMessage = { role: 'system' | 'user' | 'assistant'; content: string };
 
 /**
  * Swarm management for multiple LightAgent instances

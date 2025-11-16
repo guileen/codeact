@@ -2,10 +2,10 @@
 import "dotenv/config";
 import readline from "node:readline";
 import path from "node:path";
-import { LightAgent } from "./lightagent/light-agent.js";
-import { codeExecutionTools } from "./lightagent/code-execution-tools.js";
-import { ContextManager } from "./context.js";
-import { CleanUI } from "./ui_clean.js";
+import { LightAgent } from "./core/light-agent";
+import { codeExecutionTools } from "./core/code-execution-tools";
+import { ContextManager } from "./shared/context";
+import { CleanUI } from "./ui/clean";
 
 async function single(prompt: string, workingDir?: string) {
   // 初始化上下文

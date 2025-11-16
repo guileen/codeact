@@ -144,34 +144,42 @@ OPENAI_API_KEY=your_openai_key_here
 
 ### Project Structure
 ```
-├── src/                    # Main CodeAct implementation
-│   ├── cli.ts             # Command-line interface
-│   ├── agent.ts           # Main code execution agent
-│   ├── sandbox.ts         # Code execution environment
-│   ├── tools.ts           # Tool integration
-│   ├── tool_executor.ts   # Tool execution engine
-│   ├── ui_clean.ts        # User interface components
-│   ├── llm.ts             # Language model integration
-│   ├── config.ts          # Configuration management
-│   ├── context.ts         # Context management
-│   ├── prompt.ts          # Prompt templates
-│   ├── schemas.ts         # Type schemas
-│   └── lightagent/        # LightAgent TypeScript implementation
-│       ├── light-agent.ts # Main LightAgent class
-│       ├── light-swarm.ts # Multi-agent coordination
-│       ├── tool-*.ts      # Tool system components
-│       ├── types.ts       # TypeScript definitions
-│       ├── logger.ts      # Logging utilities
-│       └── index.ts       # Entry point
-├── LightAgent/            # Python LightAgent submodule (reference)
-├── examples/              # Usage examples and tests
+├── src/                           # Main source code
+│   ├── cli.ts                    # Command-line interface (LightAgent-powered)
+│   ├── agent.ts                  # Legacy CodeAct agent (deprecated)
+│   ├── lightagent/               # LightAgent TypeScript implementation
+│   │   ├── light-agent.ts        # Main LightAgent class
+│   │   ├── code-execution-tools.ts # Code execution tools
+│   │   ├── light-swarm.ts        # Multi-agent coordination
+│   │   ├── tool-*.ts             # Tool system components
+│   │   ├── types.ts              # TypeScript definitions
+│   │   ├── logger.ts             # Logging utilities
+│   │   └── index.ts              # Entry point
+│   ├── llm.ts                    # Language model integration
+│   ├── sandbox.ts                # Code execution environment
+│   ├── config.ts                 # Configuration management
+│   ├── context.ts                # Context management
+│   ├── tools.ts                  # Tool integration
+│   ├── tool_executor.ts          # Tool execution engine
+│   ├── ui_clean.ts               # User interface components
+│   ├── prompt.ts                 # Prompt templates
+│   └── schemas.ts                # Type schemas
+├── examples/                      # Usage examples and tests
 │   ├── 01-single-agent-simple.ts
 │   ├── 04-multi-agent-simple.ts
 │   ├── 03-tools-test.ts
 │   ├── 06-error-handling.ts
-│   └── tools/             # Example tool implementations
-├── dist/                  # Compiled JavaScript output
-└── test_comprehensive.ts  # Comprehensive test suite
+│   └── tools/                    # Example tool implementations
+├── tests/                         # Test files
+│   └── test_comprehensive.ts      # Comprehensive test suite
+├── docs/                          # Documentation
+│   └── AGI_RESEARCH.md            # Research documentation
+├── LightAgent/                    # Python LightAgent submodule (reference)
+├── dist/                          # Compiled JavaScript output
+├── README.md                      # Main project documentation
+├── CLAUDE.md                      # Claude Code guidance (this file)
+├── package.json                   # Node.js dependencies
+└── tsconfig.json                  # TypeScript configuration
 ```
 
 ## Development Notes

@@ -1,8 +1,8 @@
 #!/usr/bin/env tsx
 
 // CodeAct 沙箱终极综合测试 - 包含所有必要的安全和功能测试
-import { runCode } from './src/sandbox.js';
-import { ContextManager } from './src/context.js';
+import { runCode } from '../src/shared/sandbox.js';
+import { ContextManager } from '../src/shared/context.js';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';

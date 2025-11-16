@@ -1,6 +1,6 @@
 import { ToolCall, ToolResult, ToolType } from "./tools";
-import { runCode } from "./sandbox";
-import { CodeBlock } from "./schemas";
+import { runCode } from "../shared/sandbox";
+import { CodeBlock } from "../shared/schemas";
 import { v4 as uuidv4 } from "uuid";
 
 export class ToolExecutor {

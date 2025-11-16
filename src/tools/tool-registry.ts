@@ -1,4 +1,27 @@
-import { ToolInfo, OpenAIFunction } from './types';
+type ToolInfo = {
+  tool_name: string;
+  tool_title?: string;
+  tool_description: string;
+  tool_params: Array<{
+    name: string;
+    type: string;
+    description: string;
+    required: boolean;
+  }>;
+};
+
+type OpenAIFunction = {
+  type: 'function';
+  function: {
+    name: string;
+    description: string;
+    parameters: {
+      type: 'object';
+      properties: Record<string, any>;
+      required: string[];
+    };
+  };
+};
 
 /**
  * Centralized tool registry management

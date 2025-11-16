@@ -1,5 +1,4 @@
 import { ToolRegistry } from './tool-registry';
-import { ToolResponse } from './types';
 
 /**
  * Async tool dispatcher

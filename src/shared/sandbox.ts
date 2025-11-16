@@ -29,7 +29,10 @@ export async function runJSCode(codeBlock: CodeBlock): Promise<SandboxResult> {
       ...SANDBOX_CONFIG,
       filesystem: {
         ...SANDBOX_CONFIG.filesystem,
-        denyRead: context.sandboxConfig.forbiddenPaths,
+        denyRead: [
+          ...SANDBOX_CONFIG.filesystem.denyRead,
+          ...context.sandboxConfig.forbiddenPaths
+        ],
         allowWrite: [...SANDBOX_CONFIG.filesystem.allowWrite, ...context.sandboxConfig.allowedPaths],
         denyWrite: [
           ...SANDBOX_CONFIG.filesystem.denyWrite,
@@ -51,7 +54,7 @@ export async function runJSCode(codeBlock: CodeBlock): Promise<SandboxResult> {
     // 执行命令并收集输出
     const output = await new Promise<string>((resolve, reject) => {
       const childProcess = spawn(wrappedCommand, {
-        shell: true,
+        // shell: true,
         stdio: ['pipe', 'pipe', 'pipe'],
         cwd: context.workingDirectory,
         env: {
@@ -118,7 +121,10 @@ export async function runBashCode(codeBlock: CodeBlock): Promise<SandboxResult> 
       ...SANDBOX_CONFIG,
       filesystem: {
         ...SANDBOX_CONFIG.filesystem,
-        denyRead: context.sandboxConfig.forbiddenPaths,
+        denyRead: [
+          ...SANDBOX_CONFIG.filesystem.denyRead,
+          ...context.sandboxConfig.forbiddenPaths
+        ],
         allowWrite: [...SANDBOX_CONFIG.filesystem.allowWrite, ...context.sandboxConfig.allowedPaths],
         denyWrite: [
           ...SANDBOX_CONFIG.filesystem.denyWrite,
@@ -160,7 +166,7 @@ export async function runBashCode(codeBlock: CodeBlock): Promise<SandboxResult> 
     // 执行命令并收集输出
     const output = await new Promise<string>((resolve, reject) => {
       const childProcess = spawn(wrappedCommand, [], {
-        shell: true,
+        // shell: true,
         stdio: ['pipe', 'pipe', 'pipe'],
         cwd: context.workingDirectory,
         env: {
@@ -222,7 +228,10 @@ export async function runPythonCode(codeBlock: CodeBlock): Promise<SandboxResult
       ...SANDBOX_CONFIG,
       filesystem: {
         ...SANDBOX_CONFIG.filesystem,
-        denyRead: context.sandboxConfig.forbiddenPaths,
+        denyRead: [
+          ...SANDBOX_CONFIG.filesystem.denyRead,
+          ...context.sandboxConfig.forbiddenPaths
+        ],
         allowWrite: [...SANDBOX_CONFIG.filesystem.allowWrite, ...context.sandboxConfig.allowedPaths],
         denyWrite: [
           ...SANDBOX_CONFIG.filesystem.denyWrite,
@@ -243,7 +252,7 @@ export async function runPythonCode(codeBlock: CodeBlock): Promise<SandboxResult
     // 执行命令并收集输出
     const output = await new Promise<string>((resolve, reject) => {
       const childProcess = spawn(wrappedCommand, [], {
-        shell: true,
+        // shell: true,
         stdio: ['pipe', 'pipe', 'pipe'],
         cwd: context.workingDirectory,
         env: {
