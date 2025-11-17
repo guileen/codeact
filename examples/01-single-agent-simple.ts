@@ -1,4 +1,4 @@
-import { LightAgent, createTool } from '../src';
+import { LightAgent, createTool } from '../src'
 
 /**
  * Example 1: Simple Single Agent Usage
@@ -7,19 +7,19 @@ import { LightAgent, createTool } from '../src';
 
 // Define a simple tool using createTool helper
 function getCurrentTimeFunction(): string {
-  const now = new Date();
-  return `Current time: ${now.toLocaleString()}`;
+  const now = new Date()
+  return `Current time: ${now.toLocaleString()}`
 }
 
 const getCurrentTime = createTool(getCurrentTimeFunction, {
   tool_name: 'get_current_time',
   tool_title: 'Current Time',
   tool_description: 'Get the current date and time',
-  tool_params: []
-});
+  tool_params: [],
+})
 
 async function runSingleAgentExample() {
-  console.log('=== Single Agent Example ===\n');
+  console.log('=== Single Agent Example ===\n')
 
   try {
     // Create a simple agent
@@ -29,30 +29,33 @@ async function runSingleAgentExample() {
       role: 'Time Assistant',
       model: 'gpt-4o-mini',
       debug: true,
-      tools: [getCurrentTime]
-    });
+      tools: [getCurrentTime],
+    })
 
-    console.log('Agent created successfully!');
-    console.log('Agent name:', agent.name);
-    console.log('Available tools:', agent.getTools().length);
+    console.log('Agent created successfully!')
+    console.log('Agent name:', agent.name)
+    console.log('Available tools:', agent.getTools().length)
 
     // Run the agent
-    const response = await agent.run('What time is it now?');
+    const response = await agent.run('What time is it now?')
 
-    console.log('Agent Response:', response);
+    console.log('Agent Response:', response)
 
     // Get agent information
-    console.log('\nAgent Info:');
-    console.log('Name:', agent.name);
-    console.log('Available tools:', agent.getTools().map(t => t.function.name));
+    console.log('\nAgent Info:')
+    console.log('Name:', agent.name)
+    console.log(
+      'Available tools:',
+      agent.getTools().map(t => t.function.name)
+    )
   } catch (error) {
-    console.error('Error running example:', error);
+    console.error('Error running example:', error)
   }
 }
 
 // Run the example
-if (require.main === module) {
-  runSingleAgentExample().catch(console.error);
+if (import.meta.url === `file://${process.argv[1]}`) {
+  runSingleAgentExample().catch(console.error)
 }
 
-export { runSingleAgentExample };
+export { runSingleAgentExample }

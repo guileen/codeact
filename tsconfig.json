@@ -1,20 +1,42 @@
 {
   "compilerOptions": {
-    "target": "ES2020",
-    "module": "ES2020",
+    "target": "ES2022",
+    "lib": ["ES2022"],
+    "module": "ES2022",
     "moduleResolution": "node",
-    "allowImportingTsExtensions": false,
-    "resolveJsonModule": true,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "strict": true,
+    "noImplicitAny": true,
+    "noImplicitReturns": true,
+    "noImplicitThis": true,
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+    "exactOptionalPropertyTypes": false,
+    "noImplicitOverride": true,
+    "noPropertyAccessFromIndexSignature": false,
     "skipLibCheck": true,
     "outDir": "dist",
-    "rootDir": "src",
+    "rootDir": ".",
     "declaration": true,
     "declarationMap": true,
     "sourceMap": true,
-    "isolatedModules": true
+    "removeComments": false,
+    "isolatedModules": true,
+    "verbatimModuleSyntax": false,
+    "allowImportingTsExtensions": false,
+    "resolveJsonModule": true,
+    "baseUrl": "./src",
+    "paths": {
+      "@/*": ["./*"],
+      "@/types/*": ["./shared/*"],
+      "@/tools/*": ["./tools/*"],
+      "@/core/*": ["./core/*"]
+    }
   },
-  "include": ["src"]
+  "include": ["src/**/*", "examples/**/*"],
+  "exclude": ["node_modules", "dist", "**/*.test.ts", "**/*.spec.ts"]
 }

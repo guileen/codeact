@@ -1,23 +1,39 @@
 {
   "name": "codeact",
-  "version": "0.1.0",
-  "description": "Minimal CodeAct agent framework with pnpm+ts+zod+vm2",
+  "version": "1.0.0",
+  "description": "CodeAct agent framework - TypeScript implementation with LightAgent and code execution sandbox",
   "type": "module",
   "bin": {
     "codeact": "dist/cli.js"
   },
   "scripts": {
-    "build": "tsc -p tsconfig.json",
+    "build": "tsc",
+    "build:watch": "tsc --watch",
     "start": "pnpm build && node dist/cli.js",
-    "dev": "tsx src/cli.ts"
+    "dev": "tsx --watch src/cli.ts",
+    "test": "node --test test/**/*.test.ts",
+    "test:watch": "node --test --watch test/**/*.test.ts",
+    "lint": "eslint . --ext .ts,.tsx",
+    "lint:fix": "eslint . --ext .ts,.tsx --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "type-check": "tsc --noEmit",
+    "clean": "rm -rf dist",
+    "example:simple": "npx tsx examples/01-single-agent-simple.ts",
+    "example:multi": "npx tsx examples/04-multi-agent-simple.ts",
+    "example:tools": "npx tsx examples/03-tools-test.ts",
+    "example:error": "npx tsx examples/06-error-handling.ts",
+    "example:code": "npx tsx examples/07-code-execution.ts",
+    "prepublishOnly": "pnpm clean && pnpm build"
   },
   "engines": {
-    "node": ">=18"
+    "node": ">=20.0.0",
+    "pnpm": ">=8.0.0"
   },
+  "packageManager": "pnpm@9.15.4",
   "dependencies": {
     "@anthropic-ai/sandbox-runtime": "^0.0.10",
     "@themaximalist/llm.js": "^1.0.3",
-    "@types/uuid": "^11.0.0",
     "chalk": "^5.6.2",
     "cli-spinners": "^3.3.0",
     "dotenv": "^16.4.5",
@@ -25,8 +41,38 @@
     "zod": "^3.23.8"
   },
   "devDependencies": {
-    "@types/node": "^20.19.25",
-    "tsx": "^4.20.6",
-    "typescript": "^5.5.4"
-  }
+    "@types/node": "^22.10.2",
+    "@types/uuid": "^10.0.0",
+    "@typescript-eslint/eslint-plugin": "^8.18.2",
+    "@typescript-eslint/parser": "^8.18.2",
+    "eslint": "^9.17.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-import": "^2.31.0",
+    "prettier": "^3.4.2",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "keywords": [
+    "ai",
+    "agent",
+    "llm",
+    "code-execution",
+    "sandbox",
+    "lightagent",
+    "codeact",
+    "typescript"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-username/codeact.git"
+  },
+  "bugs": {
+    "url": "https://github.com/your-username/codeact/issues"
+  },
+  "homepage": "https://github.com/your-username/codeact#readme"
 }

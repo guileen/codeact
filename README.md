@@ -3,6 +3,7 @@
 Minimal AI Code Agent with a clean TypeScript implementation.
 
 **Principles**
+
 - Think → Write code → Execute → Answer
 - Results must be based on actual execution output
 
@@ -24,20 +25,42 @@ pnpm dev "say hello"
 ```
 
 Notes
+
 - Without `LLM_API_KEY`, responses are stubbed with the prompt content.
-- One‑shot mode runs `src/cli.ts` single flow; otherwise interactive mode starts.
+- One‑shot mode runs `src/cli.ts` single flow; otherwise interactive mode
+  starts.
 
 ## Scripts
-- `pnpm dev`: run `tsx src/cli.ts`
+
+### Development
+- `pnpm dev`: run `tsx src/cli.ts` with watch mode
 - `pnpm build`: compile TypeScript to `dist`
+- `pnpm build:watch`: compile with watch mode
 - `pnpm start`: build and run `dist/cli.js`
 
+### Code Quality
+- `pnpm lint`: run ESLint
+- `pnpm lint:fix`: run ESLint with auto-fix
+- `pnpm format`: format code with Prettier
+- `pnpm format:check`: check code formatting
+- `pnpm type-check`: type checking without build
+- `pnpm clean`: remove build artifacts
+
+### Examples
+- `pnpm example:simple`: run single agent example
+- `pnpm example:multi`: run multi-agent example
+- `pnpm example:tools`: run tools test example
+- `pnpm example:error`: run error handling example
+- `pnpm example:code`: run code execution example (NEW!)
+
 ## Environment
+
 - `LLM_API_KEY`: API key for chat completions
 - `LLM_BASE_URL`: base URL for the LLM API
 - `LLM_MODEL`: model name (defaults to `gpt-4o-mini`)
 
 ## Structure
+
 ```
 src/
 ├── cli.ts                # CLI entry
@@ -58,6 +81,7 @@ src/
 ```
 
 ## One‑Shot Examples
+
 - `pnpm dev "list files in cwd"`
 - `pnpm dev "create hello.txt with 'Hello'"`
 
