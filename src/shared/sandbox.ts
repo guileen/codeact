@@ -23,26 +23,9 @@ export async function runJSCode(codeBlock: CodeBlock): Promise<SandboxResult> {
     // 从上下文获取配置
     const contextManager = ContextManager.getInstance();
     const context = contextManager.getContext();
-    
-    // 动态构建沙箱配置
-    const dynamicConfig = {
-      ...SANDBOX_CONFIG,
-      filesystem: {
-        ...SANDBOX_CONFIG.filesystem,
-        denyRead: [
-          ...SANDBOX_CONFIG.filesystem.denyRead,
-          ...context.sandboxConfig.forbiddenPaths
-        ],
-        allowWrite: [...SANDBOX_CONFIG.filesystem.allowWrite, ...context.sandboxConfig.allowedPaths],
-        denyWrite: [
-          ...SANDBOX_CONFIG.filesystem.denyWrite,
-          ...context.sandboxConfig.forbiddenPaths
-        ]
-      }
-    };
-    
-    // 初始化 SandboxManager
-    await SandboxManager.initialize(dynamicConfig);
+
+    // 直接使用上下文中的沙箱配置
+    await SandboxManager.initialize(context.sandboxConfig);
     
     // 写入代码到临时文件
     fs.writeFileSync(tempScriptPath, codeBlock.code);
@@ -88,7 +71,7 @@ export async function runJSCode(codeBlock: CodeBlock): Promise<SandboxResult> {
       setTimeout(() => {
         childProcess.kill();
         reject(new Error('JavaScript execution timed out'));
-      }, context.sandboxConfig.timeout);
+      }, EXECUTION_TIMEOUT);
     });
     
     return { output, logs };
@@ -115,26 +98,9 @@ export async function runBashCode(codeBlock: CodeBlock): Promise<SandboxResult> 
     // 从上下文获取配置
     const contextManager = ContextManager.getInstance();
     const context = contextManager.getContext();
-    
-    // 动态构建沙箱配置
-    const dynamicConfig = {
-      ...SANDBOX_CONFIG,
-      filesystem: {
-        ...SANDBOX_CONFIG.filesystem,
-        denyRead: [
-          ...SANDBOX_CONFIG.filesystem.denyRead,
-          ...context.sandboxConfig.forbiddenPaths
-        ],
-        allowWrite: [...SANDBOX_CONFIG.filesystem.allowWrite, ...context.sandboxConfig.allowedPaths],
-        denyWrite: [
-          ...SANDBOX_CONFIG.filesystem.denyWrite,
-          ...context.sandboxConfig.forbiddenPaths
-        ]
-      }
-    };
-    
-    // 初始化 SandboxManager
-    await SandboxManager.initialize(dynamicConfig);
+
+    // 直接使用上下文中的沙箱配置
+    await SandboxManager.initialize(context.sandboxConfig);
     
     // 检测用户实际使用的 shell
     const userShell = process.env.SHELL || '/bin/bash';
@@ -199,7 +165,7 @@ export async function runBashCode(codeBlock: CodeBlock): Promise<SandboxResult> 
       setTimeout(() => {
         childProcess.kill();
         reject(new Error('Bash execution timed out'));
-      }, context.sandboxConfig.timeout);
+      }, EXECUTION_TIMEOUT);
     });
     
     return { output, logs };
@@ -223,25 +189,8 @@ export async function runPythonCode(codeBlock: CodeBlock): Promise<SandboxResult
     const contextManager = ContextManager.getInstance();
     const context = contextManager.getContext();
 
-    // 动态构建沙箱配置
-    const dynamicConfig = {
-      ...SANDBOX_CONFIG,
-      filesystem: {
-        ...SANDBOX_CONFIG.filesystem,
-        denyRead: [
-          ...SANDBOX_CONFIG.filesystem.denyRead,
-          ...context.sandboxConfig.forbiddenPaths
-        ],
-        allowWrite: [...SANDBOX_CONFIG.filesystem.allowWrite, ...context.sandboxConfig.allowedPaths],
-        denyWrite: [
-          ...SANDBOX_CONFIG.filesystem.denyWrite,
-          ...context.sandboxConfig.forbiddenPaths
-        ]
-      }
-    };
-
     // 初始化 SandboxManager
-    await SandboxManager.initialize(dynamicConfig);
+    await SandboxManager.initialize(context.sandboxConfig);
 
     // 写入代码到临时文件
     fs.writeFileSync(tempScriptPath, codeBlock.code);
@@ -286,7 +235,7 @@ export async function runPythonCode(codeBlock: CodeBlock): Promise<SandboxResult
       setTimeout(() => {
         childProcess.kill();
         reject(new Error('Python execution timed out'));
-      }, context.sandboxConfig.timeout);
+      }, EXECUTION_TIMEOUT);
     });
 
     return { output, logs };
