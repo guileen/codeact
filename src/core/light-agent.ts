@@ -313,36 +313,50 @@ export class LightAgent {
    * Process non-streaming response
    */
   private async processNonStreamResponse(response: any, maxRetry: number): Promise<string> {
-    for (let attempt = 0; attempt < maxRetry; attempt++) {
-      const content = response.choices?.[0]?.message?.content || 'No content available';
+    const content = response.choices?.[0]?.message?.content || 'No content available';
+    console.log("Raw LLM response:", JSON.stringify(content)); // Debug logging
 
-      // Parse tool calls from the content (like the original agent does)
-      const toolCalls = this.parseToolCallsFromContent(content);
+    // Parse tool calls from the content (like the original agent does)
+    const toolCalls = this.parseToolCallsFromContent(content);
+    console.log("Extracted code blocks:", toolCalls); // Debug logging
 
-      // If there are tool calls, execute them
-      if (toolCalls.length > 0) {
-        const toolResults = await this.executeParsedToolCalls(toolCalls);
+    // If there are tool calls, execute them and return the results (like okversion)
+    if (toolCalls.length > 0) {
+      let finalResult = "";
 
-        // Append tool results to conversation history
-        this.history.push({ role: 'assistant', content });
-        for (const toolResult of toolResults) {
-          this.history.push({
-            role: 'system',
-            content: `Tool ${toolResult.name} result: ${toolResult.result}`
-          });
+      // Execute all code blocks
+      for(const toolCall of toolCalls) {
+        const codeBlock = {
+          language: toolCall.language,
+          code: toolCall.code
+        };
+
+        const result = await runCode(codeBlock);
+
+        // Combine logs and output
+        let resultText = "";
+        if (result.logs && result.logs.length > 0) {
+          resultText += result.logs.join("\n");
+        }
+        if (result.output !== undefined) {
+          resultText += (resultText ? "\n" : "") +
+                       (typeof result.output === "string" ? result.output : JSON.stringify(result.output));
         }
 
-        // Make a follow-up call to LLM with tool results
-        const followUpResponse = await this.makeLLMCallWithHistory();
-        return followUpResponse;
+        finalResult += resultText + "\n";
       }
 
-      this.log('INFO', 'final_reply', { reply: content });
-      return content;
+      // Add the response and result to history
+      this.history.push({ role: 'assistant', content });
+      this.history.push({ role: 'system', content: finalResult.trim() });
+
+      return finalResult.trim();
     }
 
-    this.log('ERROR', 'max_retry_reached', { message: 'Failed to generate a valid response.' });
-    return 'Failed to generate a valid response.';
+    // If no code blocks were found, return the raw response (like okversion)
+    this.history.push({ role: 'assistant', content });
+    this.log('INFO', 'final_reply', { reply: content });
+    return content;
   }
 
   /**

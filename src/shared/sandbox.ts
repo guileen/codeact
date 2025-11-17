@@ -18,26 +18,26 @@ export async function runJSCode(codeBlock: CodeBlock): Promise<SandboxResult> {
   const logs: string[] = [];
   const tempDir = tmpdir();
   const tempScriptPath = path.join(tempDir, `script_${Date.now()}.js`);
-  
+
   try {
     // 从上下文获取配置
     const contextManager = ContextManager.getInstance();
     const context = contextManager.getContext();
 
-    // 直接使用上下文中的沙箱配置
+    // 使用 sandbox-runtime 初始化
     await SandboxManager.initialize(context.sandboxConfig);
-    
+
     // 写入代码到临时文件
     fs.writeFileSync(tempScriptPath, codeBlock.code);
-    
-    // 使用 sandbox-runtime 包装 Node.js 命令，设置工作目录
-    // 添加环境变量来避免 OpenSSL 配置问题
-    const wrappedCommand = await SandboxManager.wrapWithSandbox(`OPENSSL_CONF=/dev/null NODE_OPTIONS=--no-warnings node ${tempScriptPath}`);
-    
-    // 执行命令并收集输出
+
+    // 构建简单的 node 命令，避免长命令问题
+    const nodeCommand = `node ${tempScriptPath}`;
+    const wrappedCommand = await SandboxManager.wrapWithSandbox(nodeCommand);
+
+    // 执行命令并收集输出 - 使用 shell: true 处理 sandbox 包装的长命令
     const output = await new Promise<string>((resolve, reject) => {
       const childProcess = spawn(wrappedCommand, {
-        // shell: true,
+        shell: true,
         stdio: ['pipe', 'pipe', 'pipe'],
         cwd: context.workingDirectory,
         env: {
@@ -93,52 +93,23 @@ export async function runJSCode(codeBlock: CodeBlock): Promise<SandboxResult> {
 // 使用 sandbox-runtime 实现 Bash 代码执行
 export async function runBashCode(codeBlock: CodeBlock): Promise<SandboxResult> {
   const logs: string[] = [];
-  
+
   try {
     // 从上下文获取配置
     const contextManager = ContextManager.getInstance();
     const context = contextManager.getContext();
 
-    // 直接使用上下文中的沙箱配置
+    // 使用 sandbox-runtime 包装命令，设置 shell: true 以处理长命令
     await SandboxManager.initialize(context.sandboxConfig);
-    
-    // 检测用户实际使用的 shell
-    const userShell = process.env.SHELL || '/bin/bash';
-    const shellName = userShell.split('/').pop() || 'bash';
+    const wrappedCommand = await SandboxManager.wrapWithSandbox(codeBlock.code);
 
-    // 准备完整的环境变量
-    const envVars = {
-      PATH: process.env.PATH,
-      HOME: process.env.HOME,
-      USER: process.env.USER || process.env.LOGNAME,
-      SHELL: userShell,
-      PWD: context.workingDirectory,
-      TERM: process.env.TERM || 'xterm-256color',
-      LANG: process.env.LANG || 'en_US.UTF-8',
-      LC_ALL: process.env.LC_ALL
-    };
-
-    // 构建环境变量字符串
-    const envString = Object.entries(envVars)
-      .filter(([key, value]) => value !== undefined)
-      .map(([key, value]) => `export ${key}="${value}"`)
-      .join(' && ');
-
-    // 为了避免 shell 初始化脚本的干扰，统一使用 bash 的简洁模式
-    const shellCommand = `/bin/bash --noprofile --norc -c '${envString} && ${codeBlock.code}'`;
-
-    const wrappedCommand = await SandboxManager.wrapWithSandbox(shellCommand);
-    
-    // 执行命令并收集输出
+    // 执行命令并收集输出 - 使用 shell: true 处理 sandbox 包装的长命令
     const output = await new Promise<string>((resolve, reject) => {
-      const childProcess = spawn(wrappedCommand, [], {
-        // shell: true,
+      const childProcess = spawn(wrappedCommand, {
+        shell: true,
         stdio: ['pipe', 'pipe', 'pipe'],
         cwd: context.workingDirectory,
-        env: {
-          ...process.env,
-          ...envVars
-        }
+        env: process.env
       });
 
       let stdout = '';
@@ -189,19 +160,20 @@ export async function runPythonCode(codeBlock: CodeBlock): Promise<SandboxResult
     const contextManager = ContextManager.getInstance();
     const context = contextManager.getContext();
 
-    // 初始化 SandboxManager
+    // 使用 sandbox-runtime 初始化
     await SandboxManager.initialize(context.sandboxConfig);
 
     // 写入代码到临时文件
     fs.writeFileSync(tempScriptPath, codeBlock.code);
 
-    // 使用 sandbox-runtime 包装 Python 命令
-    const wrappedCommand = await SandboxManager.wrapWithSandbox(`python3 ${tempScriptPath}`);
+    // 构建简单的 python3 命令，避免长命令问题
+    const pythonCommand = `python3 ${tempScriptPath}`;
+    const wrappedCommand = await SandboxManager.wrapWithSandbox(pythonCommand);
 
-    // 执行命令并收集输出
+    // 执行命令并收集输出 - 使用 shell: true 处理 sandbox 包装的长命令
     const output = await new Promise<string>((resolve, reject) => {
-      const childProcess = spawn(wrappedCommand, [], {
-        // shell: true,
+      const childProcess = spawn(wrappedCommand, {
+        shell: true,
         stdio: ['pipe', 'pipe', 'pipe'],
         cwd: context.workingDirectory,
         env: {
